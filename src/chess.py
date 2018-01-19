@@ -241,6 +241,7 @@ if __name__ == '__main__':
     drag = None
     player_turn = 1 # white
     board = Board()
+    valid_cells_dragged_piece = None
 
     while 1:
         for event in pygame.event.get():
@@ -249,16 +250,31 @@ if __name__ == '__main__':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
                 x, y = x // COLUMN_PX, y // ROW_PX
-                piece = board.remove_piece(x, y)
+                piece = board.get_piece(x, y)
                 if piece is not None:
+                    board.set_dragged_piece(x, y)
+                    valid_cells_dragged_piece = board.get_valid_cells((x, y))
                     drag = Dragger(piece, (x, y))
             if event.type == pygame.MOUSEBUTTONUP and drag is not None:
-                board.set_piece(drag.get_piece(), drag.prev_x, drag.prev_y)
+                board.reset_dragged_piece()
+                valid_cells_dragged_piece = None
+                x, y = pygame.mouse.get_pos()
+                x, y = x // COLUMN_PX, y // ROW_PX
+                board.move_piece((drag.prev_x, drag.prev_y), (x, y))
                 drag = None
 
         SCREEN.fill(CLEAR_COLOR)
 
         board.draw(SCREEN)
+
+        if valid_cells_dragged_piece is not None:
+            for cell in valid_cells_dragged_piece:
+                x, y = cell
+                sx, sy = position_to_screen((x, y))
+                cell = pygame.Surface((COLUMN_PX, ROW_PX))
+                cell.set_alpha(100)
+                cell.fill((0, 255, 0))
+                SCREEN.blit(cell, (sx, sy))
 
         if drag is not None:
             drag.draw(SCREEN)
